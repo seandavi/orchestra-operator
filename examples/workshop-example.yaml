@@ -1,0 +1,23 @@
+apiVersion: orchestra.io/v1
+kind: Workshop
+metadata:
+  name: data-science-101
+  namespace: default
+spec:
+  name: "data-science-101"
+  duration: "4h"
+  participants: 1
+  image: "rocker/rstudio:latest"
+  resources:
+    cpu: "1"
+    memory: "2Gi"
+    cpuRequest: "500m"
+    memoryRequest: "1Gi"
+  storage:
+    size: "10Gi"
+    # storageClass: "fast-ssd"  # Optional
+  ingress:
+    host: "workshop.example.com"
+    annotations:
+      kubernetes.io/ingress.class: "traefik"
+      # cert-manager.io/cluster-issuer: "letsencrypt"  # For HTTPS
