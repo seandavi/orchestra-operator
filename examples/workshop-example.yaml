@@ -6,7 +6,6 @@ metadata:
 spec:
   name: "data-science-101"
   duration: "4h"
-  participants: 1
   image: "bioconductor/bioconductor_docker:devel"
   resources:
     cpu: "1"

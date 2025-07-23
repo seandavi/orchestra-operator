@@ -1,7 +1,6 @@
 {
   "name": "data-science-workshop",
   "duration": "4h",
-  "participants": 1,
   "image": "bioconductor/bioconductor_docker:devel",
   "resources": {
     "cpu": "1",

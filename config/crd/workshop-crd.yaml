@@ -22,10 +22,6 @@ spec:
                 type: string
                 default: "4h"
                 description: "Workshop duration (e.g., 4h, 2h30m)"
-              participants:
-                type: integer
-                default: 1
-                description: "Number of expected participants"
               image:
                 type: string
                 default: "rocker/rstudio:latest"

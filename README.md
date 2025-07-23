@@ -89,7 +89,6 @@ metadata:
 spec:
   name: "data-science-101"
   duration: "4h"
-  participants: 1
   image: "rocker/rstudio:latest"
   resources:
     cpu: "2"
@@ -206,7 +205,6 @@ just test                       # Run test suite
 |-------|------|---------|-------------|
 | `name` | string | *required* | Workshop instance name |
 | `duration` | string | `"4h"` | Workshop duration (e.g., "2h30m", "1d") |
-| `participants` | integer | `1` | Number of expected participants |
 | `image` | string | `"rocker/rstudio:latest"` | RStudio Docker image |
 | `resources.cpu` | string | `"1"` | CPU limit |
 | `resources.memory` | string | `"2Gi"` | Memory limit |
