@@ -14,12 +14,9 @@ RUN pip install uv && uv sync --frozen
 # Copy source code
 COPY src/ ./src/
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash operator
-USER operator
-
-# Set Python path
+# Set Python path to include the virtual environment
 ENV PYTHONPATH=/app/src
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Run the operator
 CMD ["python", "-m", "main"]

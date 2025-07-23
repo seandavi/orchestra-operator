@@ -5,5 +5,7 @@
     ".justfile": "just"
   },
   "just.executable": "just",
-  "just.showRecipesInExplorer": true
+  "just.showRecipesInExplorer": true,
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.terminal.activateEnvironment": true
 }
