@@ -15,7 +15,8 @@ def register_cleanup_handlers() -> None:
     pass
 
 
-@kopf.timer('orchestra.io', 'v1', 'workshops', interval=300)  # Check every 5 minutes
+# check every 5 minutes for expired workshops
+@kopf.timer('orchestra.io', 'v1', 'workshops', interval=300)  # type: ignore
 async def workshop_expiration_timer(
     spec: dict,
     status: dict,
@@ -57,7 +58,7 @@ async def workshop_expiration_timer(
         logger.error(f"Failed to parse expiration time for workshop {name}: {e}")
 
 
-@kopf.on.field('orchestra.io', 'v1', 'workshops', field='status.phase')
+@kopf.on.field('orchestra.io', 'v1', 'workshops', field='status.phase') # type: ignore
 async def workshop_phase_change(
     old: str,
     new: str, 
