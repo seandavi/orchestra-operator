@@ -331,6 +331,23 @@ wheels = [
 ]
 
 [[package]]
+name = "kubernetes-asyncio"
+version = "32.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "certifi" },
+    { name = "python-dateutil" },
+    { name = "pyyaml" },
+    { name = "six" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b9/74/6d454c06c44acbe2dba10aaddb87e6a8a980055308d4052aa408da280095/kubernetes_asyncio-32.3.2.tar.gz", hash = "sha256:a4b6da1dbfa16e87ab8df6898f54fa03f651591a502bd6480a647d5513a580bf", size = 1032557, upload-time = "2025-04-30T21:59:34.121Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/bf/8d9ae183b3bee0811f633411d3e3de4bcc58eefb81021b3e2fdcc1d1e26b/kubernetes_asyncio-32.3.2-py3-none-any.whl", hash = "sha256:3584e6358571e686ea1396fc310890263c58fa41c084a841a9609a54ad05de62", size = 1984148, upload-time = "2025-04-30T21:59:32.254Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -429,6 +446,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "kopf" },
     { name = "kubernetes" },
+    { name = "kubernetes-asyncio" },
     { name = "python-dateutil" },
     { name = "pyyaml" },
 ]
@@ -450,6 +468,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.0" },
     { name = "kopf", specifier = ">=1.38.0" },
     { name = "kubernetes", specifier = ">=29.0.0" },
+    { name = "kubernetes-asyncio", specifier = ">=29.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
