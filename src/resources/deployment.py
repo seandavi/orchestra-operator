@@ -54,7 +54,7 @@ def create_rstudio_deployment(
         volume_mounts=[
             k8s.V1VolumeMount(
                 name='workshop-data',
-                mount_path='/home/rstudio'
+                mount_path='/data'
             )
         ] if storage else None
     )

@@ -1,16 +1,15 @@
 """Ingress creation for workshops."""
 
 from typing import Any, Dict
-import kubernetes.client as k8s
 
 
 def create_workshop_ingress(
     workshop_name: str, 
     namespace: str, 
     ingress_config: Dict[str, Any]
-) -> k8s.V1Ingress:
+) -> Dict[str, Any]:
     """
-    Create a Kubernetes Ingress for a workshop.
+    Create a Traefik IngressRoute for a workshop.
     
     Args:
         workshop_name: Name of the workshop
@@ -18,52 +17,49 @@ def create_workshop_ingress(
         ingress_config: Ingress configuration from workshop spec
         
     Returns:
-        V1Ingress object ready to be created
+        IngressRoute manifest as a dictionary ready to be created
     """
-    host = ingress_config.get('host')
+    # Generate host based on workshop name + orchestraplatform.org
+    host = f"{workshop_name}.orchestraplatform.org"
+    
+    # Override with custom host if provided in config
+    if ingress_config.get('host'):
+        host = ingress_config['host']
+    
+    # Get entry points (default to 'web' for HTTP)
+    entry_points = ingress_config.get('entryPoints', ['web'])
+    
+    # Additional annotations if needed
     annotations = ingress_config.get('annotations', {})
     
-    # Default annotations for Traefik
-    default_annotations = {
-        'kubernetes.io/ingress.class': 'traefik'
-    }
-    default_annotations.update(annotations)
-    
-    ingress = k8s.V1Ingress(
-        api_version='networking.k8s.io/v1',
-        kind='Ingress',
-        metadata=k8s.V1ObjectMeta(
-            name=f"{workshop_name}-ingress",
-            namespace=namespace,
-            labels={
+    ingress_route = {
+        'apiVersion': 'traefik.io/v1alpha1',
+        'kind': 'IngressRoute',
+        'metadata': {
+            'name': f"{workshop_name}-ingress",
+            'namespace': namespace,
+            'labels': {
                 'app': workshop_name,
-                'component': 'rstudio'
+                'component': 'rstudio',
+                'workshop': workshop_name
             },
-            annotations=default_annotations
-        ),
-        spec=k8s.V1IngressSpec(
-            rules=[
-                k8s.V1IngressRule(
-                    host=host,
-                    http=k8s.V1HTTPIngressRuleValue(
-                        paths=[
-                            k8s.V1HTTPIngressPath(
-                                path='/',
-                                path_type='Prefix',
-                                backend=k8s.V1IngressBackend(
-                                    service=k8s.V1IngressServiceBackend(
-                                        name=f"{workshop_name}-service",
-                                        port=k8s.V1ServiceBackendPort(
-                                            number=80
-                                        )
-                                    )
-                                )
-                            )
-                        ]
-                    )
-                )
+            'annotations': annotations
+        },
+        'spec': {
+            'entryPoints': entry_points,
+            'routes': [
+                {
+                    'match': f"Host(`{host}`)",
+                    'kind': 'Rule',
+                    'services': [
+                        {
+                            'name': f"{workshop_name}-service",
+                            'port': 80
+                        }
+                    ]
+                }
             ]
-        )
-    )
+        }
+    }
     
-    return ingress
+    return ingress_route

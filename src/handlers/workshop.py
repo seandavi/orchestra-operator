@@ -26,12 +26,13 @@ def register_workshop_handlers() -> None:
 @kopf.on.create('orchestra.io', 'v1', 'workshops')
 async def workshop_create_handler(
     spec: Dict[str, Any],
-    meta: Dict[str, Any], 
+    meta: Dict[str, Any],
+    patch,
     status: Dict[str, Any],
     namespace: str,
     name: str,
     **kwargs: Any
-) -> Dict[str, Any]:
+) -> None:
     """Handle Workshop creation events."""
     logger.info(f"Creating workshop {name} in namespace {namespace}")
     
@@ -53,7 +54,7 @@ async def workshop_create_handler(
         # Create Kubernetes client
         k8s_apps_v1 = k8s_client.AppsV1Api()
         k8s_core_v1 = k8s_client.CoreV1Api()
-        k8s_networking_v1 = k8s_client.NetworkingV1Api()
+        k8s_custom_objects_v1 = k8s_client.CustomObjectsApi()
         
         # Create PersistentVolumeClaim for workshop data
         if storage:
@@ -97,28 +98,39 @@ async def workshop_create_handler(
             else:
                 raise
         
-        # Create Ingress (if configured)
+        # Create Ingress (if enabled)
         workshop_url = None
-        if ingress_config.get('host'):
-            try:
-                ingress = create_workshop_ingress(workshop_name, namespace, ingress_config)
-                k8s_networking_v1.create_namespaced_ingress(
-                    namespace=namespace, body=ingress
-                )
-                workshop_url = f"https://{ingress_config['host']}"
-                logger.info(f"Created ingress for workshop {workshop_name}")
-            except ApiException as e:
-                if e.status == 409:  # Already exists
-                    workshop_url = f"https://{ingress_config['host']}"
-                    logger.info(f"Ingress for workshop {workshop_name} already exists")
-                else:
-                    raise
-        
+        # Always create ingress with auto-generated hostname
+        try:
+            ingress = create_workshop_ingress(workshop_name, namespace, ingress_config)
+            k8s_custom_objects_v1.create_namespaced_custom_object(
+                group="traefik.io",
+                version="v1alpha1", 
+                namespace=namespace,
+                plural="ingressroutes",
+                body=ingress
+            )
+            # Extract the host from the ingress route
+            host = ingress['spec']['routes'][0]['match'].split('`')[1]  # Extract from Host(`hostname`)
+            workshop_url = f"https://{host}"
+            logger.info(f"Created ingress route for workshop {workshop_name} at {workshop_url}")
+        except ApiException as e:
+            if e.status == 409:  # Already exists
+                # Generate the expected URL for existing ingress
+                host = f"{workshop_name}.orchestraplatform.org"
+                if ingress_config.get('host'):
+                    host = ingress_config['host']
+                workshop_url = f"https://{host}"
+                logger.info(f"Ingress route for workshop {workshop_name} already exists at {workshop_url}")
+            else:
+                raise
+       
+        logger.info(f"Workshop {workshop_name} created successfully")
         # Update status to Ready
-        return {
-            'phase': 'Ready',
+        status_return = {
+            'phase': 'Ready',  # Changed to Ready since workshop is actually created
             'url': workshop_url,
-            'createdAt': kwargs.get('created', ''),
+            'createdAt': meta.get('creationTimestamp', ''),
             'expiresAt': expiration_time.isoformat(),
             'conditions': [{
                 'type': 'Ready',
@@ -127,10 +139,13 @@ async def workshop_create_handler(
                 'message': 'Workshop resources created successfully'
             }]
         }
+        logger.info(f"Workshop {workshop_name} status updated: {status_return}")
+        
+        patch['status'] = status_return
         
     except Exception as e:
         logger.error(f"Failed to create workshop {name}: {e}")
-        return {
+        patch['status'] = {
             'phase': 'Failed',
             'conditions': [{
                 'type': 'Ready', 
@@ -174,19 +189,23 @@ async def workshop_delete_handler(
         # Create Kubernetes clients
         k8s_apps_v1 = k8s_client.AppsV1Api()
         k8s_core_v1 = k8s_client.CoreV1Api()
-        k8s_networking_v1 = k8s_client.NetworkingV1Api()
+        k8s_custom_objects_v1 = k8s_client.CustomObjectsApi()
         
-        # Delete in reverse order: Ingress -> Service -> Deployment -> PVC
+        # Delete in reverse order: IngressRoute -> Service -> Deployment -> PVC
         
-        # Delete Ingress
+        # Delete IngressRoute
         try:
-            k8s_networking_v1.delete_namespaced_ingress(
-                name=f"{workshop_name}-ingress", namespace=namespace
+            k8s_custom_objects_v1.delete_namespaced_custom_object(
+                group="traefik.io",
+                version="v1alpha1",
+                namespace=namespace,
+                plural="ingressroutes",
+                name=f"{workshop_name}-ingress"
             )
-            logger.info(f"Deleted ingress for workshop {workshop_name}")
+            logger.info(f"Deleted ingress route for workshop {workshop_name}")
         except ApiException as e:
             if e.status != 404:  # Ignore not found errors
-                logger.warning(f"Failed to delete ingress: {e}")
+                logger.warning(f"Failed to delete ingress route: {e}")
         
         # Delete Service  
         try:

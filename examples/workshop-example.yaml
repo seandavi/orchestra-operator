@@ -13,10 +13,10 @@ spec:
     cpuRequest: "500m"
     memoryRequest: "1Gi"
   storage:
-    size: "10Gi"
+    size: "100Gi"
     # storageClass: "fast-ssd"  # Optional
   ingress:
-    host: "workshop.example.com"
+    host: "data-science-101.orchestraplatform.org"
     annotations:
       kubernetes.io/ingress.class: "traefik"
       # cert-manager.io/cluster-issuer: "letsencrypt"  # For HTTPS
